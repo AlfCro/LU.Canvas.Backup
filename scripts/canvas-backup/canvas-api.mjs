@@ -74,10 +74,11 @@ class CanvasApi {
     }
   }
 
-  async listPaginated(pathOrUrl, params = {}) {
+  async listPaginated(pathOrUrl, params = {}, { onPage } = {}) {
     const items = [];
     let nextUrl = pathOrUrl;
     let nextParams = params;
+    let pageNumber = 0;
 
     while (nextUrl) {
       const response = await this.fetchRaw(nextUrl, {
@@ -95,8 +96,13 @@ class CanvasApi {
       }
 
       items.push(...page);
+      pageNumber += 1;
       nextUrl = getNextLink(response.headers.get('link'));
       nextParams = {};
+
+      if (onPage) {
+        onPage({ pageNumber, pageSize: page.length, totalSoFar: items.length, hasMore: Boolean(nextUrl) });
+      }
     }
 
     return items;

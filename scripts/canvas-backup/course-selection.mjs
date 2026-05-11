@@ -225,7 +225,7 @@ function countExcludedReasons(excludedDecisions) {
   return counts;
 }
 
-async function discoverCourses(api, options) {
+async function discoverCourses(api, options, { onPage } = {}) {
   validateDiscoveryScope(options);
 
   if (options.courseIds.length) {
@@ -243,22 +243,31 @@ async function discoverCourses(api, options) {
   }
 
   const include = ['term', 'account_name', 'syllabus_body', 'concluded', 'total_students'];
+  const pageOptions = onPage ? { onPage } : {};
 
   if (options.accountId) {
-    return api.listPaginated(`/api/v1/accounts/${encodeURIComponent(options.accountId)}/courses`, {
+    return api.listPaginated(
+      `/api/v1/accounts/${encodeURIComponent(options.accountId)}/courses`,
+      {
+        per_page: 100,
+        'include[]': include,
+        'state[]': options.courseStates,
+        sort: 'sis_course_id',
+        order: 'asc',
+      },
+      pageOptions,
+    );
+  }
+
+  return api.listPaginated(
+    '/api/v1/courses',
+    {
       per_page: 100,
       'include[]': include,
       'state[]': options.courseStates,
-      sort: 'sis_course_id',
-      order: 'asc',
-    });
-  }
-
-  return api.listPaginated('/api/v1/courses', {
-    per_page: 100,
-    'include[]': include,
-    'state[]': options.courseStates,
-  });
+    },
+    pageOptions,
+  );
 }
 
 function validateDiscoveryScope(options) {
