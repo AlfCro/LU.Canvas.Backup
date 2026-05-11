@@ -2,7 +2,7 @@
 
 ## Current Instruction
 
-As of 2026-05-08, `scripts/canvas-backup.mjs` is approved as the first validation and emergency backup path. Planning remains the source of truth for scope decisions, with an emergency bias to capture too much Canvas course content and metadata rather than risk missing material after selecting the right courses. Broad discovery should use Canvas root account `1` and its nested subaccount tree; earlier account-specific checks against familiar areas are validation examples only. The approved direct mode includes staff users/enrollments with Canvas-returned login/SIS identifiers preserved, sections, tabs, settings, read-only course-adjacent metadata, subaccount metadata, fully paginates module items, retries thrown fetch/network errors, requires explicit output paths for backup runs so retries reuse the same directory, writes per-course file-size summaries from Canvas file metadata, and has Windows path-length fallbacks for generated content and files. Course backup directories are now grouped by the course's direct Canvas account/subaccount, and the nested layout has been validated against the two-course sample. Direct course file downloads should use the approved emergency maximum file size of 300 MB unless the operator overrides it. Files above that threshold should keep their Canvas metadata and a skip record, but their bytes should not be downloaded during constrained emergency runs. The approved local output root is `E:\CanvasBackup`, where TB-scale space is available. The emergency owner has clarified there is no major sensitive PII concern in this system, so privacy discussion should not block the backup.
+As of 2026-05-11, `scripts/canvas-backup.mjs` is approved as the first validation and emergency backup path. Planning remains the source of truth for scope decisions, with an emergency bias to capture too much Canvas course content and metadata rather than risk missing material after selecting the right courses. Broad discovery should use Canvas root account `1` and its nested subaccount tree; earlier account-specific checks against familiar areas are validation examples only. The approved direct mode includes staff users/enrollments with Canvas-returned login/SIS identifiers preserved, sections, tabs, settings, read-only course-adjacent metadata, subaccount metadata, fully paginates module items, retries thrown fetch/network errors, requires explicit output paths for backup runs so retries reuse the same directory, writes per-course file-size summaries from Canvas file metadata, and has Windows path-length fallbacks for generated content and files. Course backup directories are now grouped by the course's direct Canvas account/subaccount, and the nested layout has been validated against the two-course sample. Direct course file downloads should use the approved emergency maximum file size of 300 MB unless the operator overrides it. Files above that threshold should keep their Canvas metadata and a skip record, but their bytes should not be downloaded during constrained emergency runs. The backup output root is server-specific; `E:\CanvasBackup` was used on another server and must not be assumed for the current runner. The emergency owner has clarified there is no major sensitive PII concern in this system, so privacy discussion should not block the backup.
 
 ## Goal
 
@@ -169,8 +169,8 @@ General rule: if it is plausibly teaching material, structure, restore metadata,
 The approved script writes a clear, restartable structure:
 
 ```text
-E:\CanvasBackup/
-  canvas-<timestamp>/
+<backup-root>/
+  run-<date-or-purpose>/
     run-options.json
     courses.json
     course-selection.json
@@ -226,7 +226,7 @@ E:\CanvasBackup/
             exports/
 ```
 
-`E:\CanvasBackup` is the approved local output root. Backup runs require `--output` or `CANVAS_OUTPUT_DIR` so retries and size-based file skips resume in the same directory. List-only and check-config runs may still create timestamped folders under `E:\CanvasBackup`. Use a stable run folder under this root for broad backup and reuse it for retries.
+The backup output root is specific to the server that executes the run. Backup runs require `--output` or `CANVAS_OUTPUT_DIR` so retries and size-based file skips resume in the same directory. List-only and check-config runs may still create timestamped local folders under `CanvasBackup`. Use a stable run folder under the operator-approved storage root for broad backup and reuse it for retries.
 
 Each manifest should include counts, timestamps, API endpoint names, request parameters, retry-safe failure records, subaccount grouping information, and enough path information to find both API snapshots and downloaded files. Course folders use the Canvas numeric course ID, an underscore, then the SIS course ID when available, falling back to course code or name. `subaccounts.json` should summarize fetched account/subaccount metadata and any metadata fetch errors; each subaccount folder should also contain its own `subaccount.json`. `retry-list.json` should summarize failed and partially failed course IDs so a follow-up run can use exact `--course-ids` targeting. People and structure resources should be written once in their semantic folder instead of duplicated under `metadata/`.
 
@@ -245,8 +245,8 @@ If external coverage data is provided later, add a `coverage/` area beside the r
 - Use root `--account-id 1` / `CANVAS_ACCOUNT_ID=1` for broad admin discovery, or exact `--course-ids` for targeted backups. Use the current-user `/api/v1/courses` fallback only when explicitly approved with `--allow-user-course-discovery`.
 - Keep subaccount name exclusions enabled for broad discovery unless the emergency owner explicitly approves `--no-subaccount-name-exclusions` / `CANVAS_NO_SUBACCOUNT_NAME_EXCLUSIONS=true`.
 - Run `node --test scripts\canvas-backup.test.mjs` after changes to the script's option parsing, course-selection filters, path handling, staff identity output, or redaction behavior.
-- Keep broad backup output and local tokens out of Git. Store broad output under `E:\CanvasBackup`.
-- `E:\CanvasBackup` has TB-scale space available, but still review list-only counts and file-size summaries before broad direct/API and export-package copies.
+- Keep broad backup output and local tokens out of Git. Store broad output under the operator-approved path for the active backup server.
+- Confirm available storage on the active backup server before broad direct/API and export-package copies, and still review list-only counts and file-size summaries.
 - Use `--max-file-size-mb 300` / `CANVAS_MAX_FILE_SIZE_MB=300` when local or network storage is too constrained for every large course file. Treat skipped large files as known gaps, not failures.
 - Do not download Canvas Studio media in this backup path.
 - Start with a small course sample before broad execution when time allows. If timing does not allow it, keep concurrency conservative and preserve detailed manifests.
@@ -281,7 +281,7 @@ Use `CANVAS_BACKUP_ROLLOUT_CHECKLIST.md` for the concrete preflight, list-only s
 - Which completed/concluded, unpublished, and historical courses are reachable with the available token?
 - Canvas Studio content is not in scope for download here.
 - Canvas New Quizzes are documentation-only for now; no large fetch effort is planned.
-- `E:\CanvasBackup` is the approved local backup root and has TB-scale space available.
+- Confirm the backup output root and available storage on the active execution server; `E:\CanvasBackup` was a previous-server path.
 - Root account `1` list-only counts and file-size summaries still need review before broad content backup.
 - Approved: use `CANVAS_MAX_FILE_SIZE_MB=300` for broad emergency runs unless explicitly overridden.
 - No major sensitive PII concern is expected; keep the current script scope and avoid privacy debate as a blocker.

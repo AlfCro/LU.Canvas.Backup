@@ -243,3 +243,9 @@
 - Severity: 🟢 nice-to-know
 - Tags: [backup] [pattern]
 - Lesson: Canvas `export_type=zip` only packages the Files tab contents, while `export_type=common_cartridge` packages the full course (structure + content + files). The zip is a strict subset of what is already in the .imscc, and `--mode direct` separately downloads the same files via the API, so requesting both export types stores the same file bytes up to three times. Default `DEFAULT_EXPORT_TYPES` to `['common_cartridge']` and let users opt back into zip explicitly if they want a separately extractable files archive.
+
+## 2026-05-11 - Backup roots are runner-specific
+
+- Severity: 🟡 important
+- Tags: [backup] [storage] [configuration]
+- Lesson: Do not treat a previously used path such as `E:\CanvasBackup` as globally approved. Backup output roots are specific to the server/session running the backup; require an explicit operator-approved `--output` or `CANVAS_OUTPUT_DIR` for real runs, and keep only local ignored timestamp defaults for list-only/check-config convenience.

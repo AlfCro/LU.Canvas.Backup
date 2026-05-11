@@ -120,7 +120,9 @@ test('backup runs require explicit output while list-only can use a timestamped 
   assert.doesNotThrow(() => validateOutputDirForRun({}, true));
 
   assert.deepEqual(resolveOutputDir({ output: 'D:\\CanvasBackup\\rerun' }, {}).outputWasExplicit, true);
-  assert.deepEqual(resolveOutputDir({}, {}).outputWasExplicit, false);
+  const defaultOutput = resolveOutputDir({}, {});
+  assert.deepEqual(defaultOutput.outputWasExplicit, false);
+  assert.equal(defaultOutput.outputDir.startsWith(join('CanvasBackup', 'canvas-')), true);
 });
 
 test('course selection excludes noisy names, statuses, and old courses', () => {

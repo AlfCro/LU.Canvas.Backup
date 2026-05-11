@@ -1,6 +1,6 @@
 # Canvas Backup Rollout Checklist
 
-Use this checklist to move from planning to the first validated Canvas backup run. The script is approved as the first validation and emergency backup path. Root account `1`, `E:\CanvasBackup`, the `2025-04-01` cutoff, and zero-student exclusion are now approved. No major sensitive PII concern is expected; use the current script boundary and do not let privacy discussion block preservation.
+Use this checklist to move from planning to the first validated Canvas backup run. The script is approved as the first validation and emergency backup path. Root account `1`, the `2025-04-01` cutoff, and zero-student exclusion are now approved. The output root must be chosen for the server that will run the backup; `E:\CanvasBackup` was a previous-server path. No major sensitive PII concern is expected; use the current script boundary and do not let privacy discussion block preservation.
 
 ## Required Decisions
 
@@ -14,10 +14,10 @@ Use this checklist to move from planning to the first validated Canvas backup ru
 - [ ] Course name/code exclusions are approved. The example config uses `test`, `sandlåda`, `sandlada`, `sandbox`, `mall`, `template`, and `demo`, with every term matched only at field edges.
 - [ ] Subaccount name exclusions are approved. The example config excludes direct Canvas subaccounts whose name matches `sandbox` at field edges.
 - [x] Small validation course IDs are chosen. First validation used a small explicit two-course sample.
-- [x] Output root is approved: `E:\CanvasBackup`. Backup runs require an explicit stable `--output` or `CANVAS_OUTPUT_DIR` run folder under that root; reuse it for retries.
-- [x] Available storage is broadly approved: `E:\CanvasBackup` has TB-scale space. Still review root list-only counts and file-size summaries before broad content backup.
+- [ ] Output root is approved for the current execution server. Backup runs require an explicit stable `--output` or `CANVAS_OUTPUT_DIR` run folder under that root; reuse it for retries.
+- [ ] Available storage is approved for the current execution server. Still review root list-only counts and file-size summaries before broad content backup.
 - [x] Maximum Canvas course file download size is approved: use `--max-file-size-mb 300` / `CANVAS_MAX_FILE_SIZE_MB=300`; over-limit file metadata is still saved, but bytes are skipped.
-- [x] `E:\CanvasBackup` is explicitly accepted for the first run.
+- [x] `E:\CanvasBackup` is recorded as a previous-server path and should not be assumed for the current runner.
 - [x] Use the current first-pass boundary without further privacy debate before backup: the script does not deliberately fetch submissions, grades, activity logs, private conversations, or student-role membership including `Ladokstudent`.
 - [x] The emergency owner has clarified that there is no major sensitive PII concern expected in this system. Keep tokens and backup output out of Git, but do not let privacy discussion block preservation.
 - [x] Staff privacy setting for the emergency run uses the current script default: `--staff-include-deleted=false`; staff login/SIS-style identifiers returned by Canvas are always included for follow-up matching.
@@ -31,10 +31,11 @@ Use this checklist to move from planning to the first validated Canvas backup ru
 - [x] `node --check scripts\canvas-backup.mjs` passed on 2026-05-08 after the root account, E-drive, and zero-student filter changes.
 - [x] `node scripts\canvas-backup.mjs --help` printed the expected options on 2026-05-08, including the field-edge exclusion notes, `--include-courses-without-students`, `--max-file-size-mb`, and no obsolete staff identifier redaction flag.
 - [x] `node --test scripts\canvas-backup.test.mjs` passed on 2026-05-08, including the review hardening tests, sandbox subaccount exclusion tests, uniform edge-only filter tests, zero-student selection tests, staff login/SIS identifier preservation test, file-size download limit test, and metadata-only file-size summary test.
+- [x] On 2026-05-11, after correcting the server-specific output-root policy, `node --check scripts\canvas-backup.mjs`, `node scripts\canvas-backup.mjs --help`, `node scripts\canvas-backup.mjs --check-config`, and `node --test scripts\canvas-backup.test.mjs` all passed.
 - [x] `.env` exists locally only if a token is needed; it is ignored by Git.
-- [x] `node scripts\canvas-backup.mjs --check-config` can print the redacted configuration before any Canvas API calls, even before a token is configured; it now shows account `1`, `E:\CanvasBackup` timestamped output, `excludeSubaccountNameTerms`, `excludeCoursesWithoutStudents`, and no obsolete staff identifier redaction option.
-- [x] `E:\CanvasBackup` is the approved local output root, and the user has confirmed TB-scale space is available there.
-- [ ] `E:\CanvasBackup` is mounted and writable from the execution environment. On 2026-05-08, this Codex shell reported `E:\` as not ready, so the root account list-only run did not start.
+- [x] `node scripts\canvas-backup.mjs --check-config` can print the redacted configuration before any Canvas API calls, even before a token is configured; it now shows account `1`, local timestamped output under `CanvasBackup`, `excludeSubaccountNameTerms`, `excludeCoursesWithoutStudents`, and no obsolete staff identifier redaction option.
+- [ ] The operator-approved output root for the current execution server is mounted and writable.
+- [ ] The current execution server has enough available storage for the selected broad run.
 - [ ] The approved root account `1` selected-course count and file-size summaries are reviewed before broad content backup.
 - [ ] Confirm the actual broad-run `run-options.json` shows the approved `CANVAS_MAX_FILE_SIZE_MB=300` before broad backup content is fetched.
 - [ ] Per-course `metadata/file-size-summary.json` files are reviewed from a metadata-only or small direct run before approving broad storage assumptions.
@@ -62,7 +63,7 @@ Root account `1` broad selection check is the next required operational gate. Ea
 
 Pending root account `1` check:
 
-- Output: stable folder under `E:\CanvasBackup`
+- Output: stable folder under the operator-approved backup root for the current execution server
 - Account: `1`
 - Filters: states `created`, `claimed`, `available`, `completed`; `created_after` `2025-04-01`; course name/code exclusions `test`, `sandlåda`, `sandlada`, `sandbox`, `mall`, `template`, and `demo`; subaccount exclusion `sandbox`; exclude Canvas-reported `total_students=0`
 - Review selected counts, excluded reason counts, selected subaccount distribution, and file-size summaries before broad content backup.
@@ -74,11 +75,12 @@ Validation history (familiar-area examples, not production scopes):
 - One familiar-area list-only example surfaced possible local utility/support or programme shell courses in its selected set. The lesson is that broad generic exclusion terms should not be added for such locally named courses without owner review, because they may be legitimate backup scope.
 
 ```powershell
+$output = 'X:\CanvasBackup\selection-check-root-1' # Replace with the current server's backup root.
 node scripts\canvas-backup.mjs `
   --account-id 1 `
   --course-states created,claimed,available,completed `
   --created-after 2025-04-01 `
-  --output E:\CanvasBackup\selection-check-root-1 `
+  --output $output `
   --list-only
 ```
 
@@ -95,17 +97,18 @@ Review:
 - [x] Continued manifest review on 2026-05-08 reconfirmed the final list-only counts, zero subaccount metadata errors, and redacted run options for each familiar-area validation scope.
 - [x] An additional familiar-area scope was checked as a read-only example; the run had zero subaccount metadata errors and redacted run options.
 - [ ] Root account `1` list-only check has been run with the zero-student exclusion.
-- [ ] Selected course count and file-size summaries are plausible for the emergency time window. `E:\CanvasBackup` has TB-scale space, but the root account `1` selection still needs review before broad downloads or exports.
+- [ ] Selected course count and file-size summaries are plausible for the emergency time window and the current backup server's storage, but the root account `1` selection still needs review before broad downloads or exports.
 
 ## Small Course Validation
 
 Use explicit course IDs so name, status, and created-date filters do not block known validation courses.
 
 ```powershell
+$output = 'X:\CanvasBackup\validation-direct' # Replace with the current server's backup root.
 node scripts\canvas-backup.mjs `
   --course-ids <course-id-1>,<course-id-2> `
   --mode direct `
-  --output E:\CanvasBackup\validation-direct `
+  --output $output `
   --concurrency 1 `
   --file-concurrency 2
 ```
@@ -138,11 +141,12 @@ Validate:
 Run exports on a small course sample after direct validation.
 
 ```powershell
+$output = 'X:\CanvasBackup\validation-exports' # Replace with the current server's backup root.
 node scripts\canvas-backup.mjs `
   --course-ids <course-id> `
   --mode exports `
   --export-types common_cartridge `
-  --output E:\CanvasBackup\validation-exports `
+  --output $output `
   --concurrency 1
 ```
 

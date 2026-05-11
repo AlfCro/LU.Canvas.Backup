@@ -10,7 +10,7 @@ import {
 
 const DEFAULT_BASE_URL = 'https://lu.instructure.com';
 const DEFAULT_MODE = 'direct';
-const DEFAULT_OUTPUT_ROOT = 'E:\\CanvasBackup';
+const DEFAULT_OUTPUT_ROOT = 'CanvasBackup';
 const DEFAULT_COURSE_STATES = ['created', 'claimed', 'available', 'completed'];
 const DEFAULT_EXCLUDED_COURSE_NAME_TERMS = ['test', 'sandlåda', 'sandlada', 'sandbox', 'mall', 'template', 'demo'];
 const DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS = ['sandbox'];

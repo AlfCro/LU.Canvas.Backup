@@ -13,13 +13,13 @@ Prerequisites:
 
 - Node.js 20 or newer on `PATH`.
 - A Canvas API token. Broad discovery (`/accounts/<id>/courses`) requires an admin-scoped token; targeted `--course-ids` runs work with any token that can read the listed courses.
-- Write access to the backup output drive. The approved root is `E:\CanvasBackup`, where TB-scale space is available.
+- Write access to the backup output storage for the server that will run the backup. `E:\CanvasBackup` was a previous-server path and must not be assumed for the current runner.
 
 Configure:
 
 1. Copy `.env.example` to `.env`.
 2. Set `CANVAS_TOKEN=<your token>`. Adjust `CANVAS_ACCOUNT_ID`, `CANVAS_CREATED_AFTER`, exclusion lists, and `CANVAS_MAX_FILE_SIZE_MB` as needed.
-3. Set `CANVAS_OUTPUT_DIR` to a stable run folder (e.g. `E:\CanvasBackup\run-2026-05-11`) for real backup runs. Leave blank for list-only/check-config — those default to a timestamped folder under `E:\CanvasBackup`.
+3. Set `CANVAS_OUTPUT_DIR` to a stable run folder on the active backup server for real backup runs. Leave blank for list-only/check-config; those default to a timestamped local folder under `CanvasBackup`.
 
 Run (PowerShell):
 
@@ -31,12 +31,13 @@ node scripts\canvas-backup.mjs --check-config
 node scripts\canvas-backup.mjs --list-only
 
 # 3. Real backup run. CANVAS_OUTPUT_DIR or --output is required.
-node scripts\canvas-backup.mjs --output E:\CanvasBackup\run-2026-05-11
+$output = 'X:\CanvasBackup\run-2026-05-11' # Replace with the current server's backup root.
+node scripts\canvas-backup.mjs --output $output
 
 # 4. Resume an interrupted run into the same folder.
 #    --skip-completed-courses skips courses whose course-backup-manifest.json
 #    is already "completed"; everything else is retried.
-node scripts\canvas-backup.mjs --output E:\CanvasBackup\run-2026-05-11 --skip-completed-courses
+node scripts\canvas-backup.mjs --output $output --skip-completed-courses
 ```
 
 CLI flags override the matching `.env` values. Use `node scripts\canvas-backup.mjs --help` for the full option list.
@@ -82,7 +83,7 @@ Each run also appends a tee'd, ISO-timestamped copy of console output to `run.lo
 
 When a previous run was interrupted (for example by storage exhaustion) and the top-level `backup-manifest.json` was not written, use `--skip-completed-courses` on the retry to drop courses whose per-course `course-backup-manifest.json` already records `status: "completed"`. Courses with `completed_with_errors`, `failed`, or no prior manifest are still processed so the retry can finish them.
 
-Backup runs require `--output` or `CANVAS_OUTPUT_DIR` so retries and file-download skips resume in the same directory. The approved local backup root is `E:\CanvasBackup`, where TB-scale space is available. List-only and check-config runs may still use timestamped folders under `E:\CanvasBackup`.
+Backup runs require `--output` or `CANVAS_OUTPUT_DIR` so retries and file-download skips resume in the same directory. The storage root is server-specific and must be approved for the runner that will execute the backup. List-only and check-config runs may still use timestamped local folders under `CanvasBackup`.
 
 The approved emergency storage guardrail is `--max-file-size-mb 300` or `CANVAS_MAX_FILE_SIZE_MB=300`. Canvas course files larger than 300 MB are skipped by bytes, while the script still writes the full file inventory, a per-course `metadata/file-size-summary.json` from Canvas-reported file sizes, and each over-limit record in `metadata/file-downloads.json`. This limit does not currently govern Canvas content export package downloads.
 
