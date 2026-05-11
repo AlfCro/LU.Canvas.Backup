@@ -6,6 +6,48 @@ Current status: `scripts/canvas-backup.mjs` is approved as the first validation 
 
 For a Swedish lay overview aimed at responsible persons at Swedish universities, see `ANSVARIGA_UNIVERSITET.md`.
 
+
+## Quick Start
+
+Prerequisites:
+
+- Node.js 20 or newer on `PATH`.
+- A Canvas API token. Broad discovery (`/accounts/<id>/courses`) requires an admin-scoped token; targeted `--course-ids` runs work with any token that can read the listed courses.
+- Write access to the backup output drive. The approved root is `E:\CanvasBackup`, where TB-scale space is available.
+
+Configure:
+
+1. Copy `.env.example` to `.env`.
+2. Set `CANVAS_TOKEN=<your token>`. Adjust `CANVAS_ACCOUNT_ID`, `CANVAS_CREATED_AFTER`, exclusion lists, and `CANVAS_MAX_FILE_SIZE_MB` as needed.
+3. Set `CANVAS_OUTPUT_DIR` to a stable run folder (e.g. `E:\CanvasBackup\run-2026-05-11`) for real backup runs. Leave blank for list-only/check-config — those default to a timestamped folder under `E:\CanvasBackup`.
+
+Run (PowerShell):
+
+```powershell
+# 1. Verify the effective config (no Canvas API calls).
+node scripts\canvas-backup.mjs --check-config
+
+# 2. List the selected courses without backing anything up.
+node scripts\canvas-backup.mjs --list-only
+
+# 3. Real backup run. CANVAS_OUTPUT_DIR or --output is required.
+node scripts\canvas-backup.mjs --output E:\CanvasBackup\run-2026-05-11
+
+# 4. Resume an interrupted run into the same folder.
+#    --skip-completed-courses skips courses whose course-backup-manifest.json
+#    is already "completed"; everything else is retried.
+node scripts\canvas-backup.mjs --output E:\CanvasBackup\run-2026-05-11 --skip-completed-courses
+```
+
+CLI flags override the matching `.env` values. Use `node scripts\canvas-backup.mjs --help` for the full option list.
+
+Run output:
+
+- `run.log` — tee'd, ISO-timestamped copy of every console line in the run folder. Appended across reruns into the same folder.
+- `backup-manifest.json` — full run summary, written at the end.
+- `retry-list.json` — failed/partially failed course IDs to feed back via `--course-ids`.
+- `subaccounts/<account-id>-<account-name>/courses/<course-id>_<sis-or-code>/` — per-course content.
+
 ## Context
 
 - Canvas instance: https://lu.instructure.com/
