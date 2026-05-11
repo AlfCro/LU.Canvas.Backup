@@ -99,6 +99,8 @@ async function main() {
   await mkdir(options.outputDir, { recursive: true });
   installRunLogger(join(options.outputDir, 'run.log'));
 
+  logStartupBanner(api, options);
+
   const manifest = {
     startedAt: new Date().toISOString(),
     baseUrl: api.baseUrl,
@@ -114,14 +116,28 @@ async function main() {
 
   await writeJson(join(options.outputDir, 'run-options.json'), redactOptions(options));
 
-  const courses = await discoverCourses(api, options);
+  const discoveryScope = describeDiscoveryScope(options);
+  console.log(`Discovering courses from ${discoveryScope}. This can take several minutes for large accounts.`);
+  const courses = await discoverCourses(api, options, {
+    onPage: ({ pageNumber, totalSoFar, hasMore }) => {
+      const suffix = hasMore ? '' : ' (last page)';
+      console.log(`  page ${pageNumber}: ${totalSoFar} course(s) so far${suffix}`);
+    },
+  });
+  console.log(`Discovered ${courses.length} course(s).`);
+
   const subaccountCandidateSelection = selectCoursesForBackup(courses, {
     ...options,
     excludeSubaccountNameTerms: [],
     maxCourses: null,
   });
+  console.log(`Fetching subaccount metadata for ${subaccountCandidateSelection.courses.length} candidate course(s)...`);
   const subaccountIndex = await fetchSubaccountMetadata(api, subaccountCandidateSelection.courses, options);
+  console.log(`Fetched metadata for ${subaccountIndex.summary.fetchedSubaccountCount} subaccount(s).`);
+
+  console.log('Applying course selection filters...');
   const selection = selectCoursesForBackup(courses, options, subaccountIndex);
+  console.log(`Selected ${selection.summary.selectedCourseCount}/${selection.summary.discoveredCourseCount} course(s); ${selection.summary.excludedCourseCount} excluded.`);
 
   const { coursesToBackup, skippedCompletedCourses } = options.skipCompletedCourses
     ? await partitionAlreadyCompletedCourses(selection.courses, options.outputDir, subaccountIndex)
@@ -191,6 +207,33 @@ async function main() {
     console.log(`Recorded ${failedCourses} failed course(s) and ${courseErrors + manifest.errors.length} error(s). See backup-manifest.json.`);
     process.exitCode = failedCourses === selectedCourses.length ? 1 : 2;
   }
+}
+
+function logStartupBanner(api, options) {
+  console.log(`Canvas backup starting at ${new Date().toISOString()}`);
+  console.log(`  Canvas:      ${api.baseUrl}`);
+  console.log(`  Mode:        ${options.mode}`);
+  console.log(`  Output:      ${options.outputDir}`);
+  console.log(`  Concurrency: ${options.concurrency} course(s), ${options.fileConcurrency} file(s)/course`);
+  if (options.maxFileSizeMb) {
+    console.log(`  File limit:  ${options.maxFileSizeMb} MB per file`);
+  }
+  if (options.skipCompletedCourses) {
+    console.log('  Resume mode: skipping courses with a prior "completed" course-backup-manifest.json');
+  }
+  if (options.listOnly) {
+    console.log('  List-only:   no backup will be written beyond manifests');
+  }
+}
+
+function describeDiscoveryScope(options) {
+  if (options.courseIds.length) {
+    return `${options.courseIds.length} explicit course ID(s)`;
+  }
+  if (options.accountId) {
+    return `account ${options.accountId}`;
+  }
+  return 'the authenticated user (/api/v1/courses fallback)';
 }
 
 async function partitionAlreadyCompletedCourses(courses, outputDir, subaccountIndex) {
