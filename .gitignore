@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+
+# Backup outputs can contain sensitive institutional data.
+CanvasBackup/
+canvas-*/
+!scripts/canvas-backup/
+!scripts/canvas-backup/*.mjs
+*.partial
