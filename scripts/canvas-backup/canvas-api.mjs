@@ -21,6 +21,7 @@ import {
 
 const JSON_ACCEPT_HEADER = 'application/json+canvas-string-ids';
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const DEFAULT_USER_AGENT = 'LU.Canvas.Backup/1.0 (Local Canvas backup)';
 
 class CanvasHttpError extends Error {
   constructor(message, { status, url, body }) {
@@ -42,10 +43,11 @@ class CanvasNetworkError extends Error {
 }
 
 class CanvasApi {
-  constructor({ baseUrl, token, maxRetries, sleepFn = sleep }) {
+  constructor({ baseUrl, token, maxRetries, userAgent = DEFAULT_USER_AGENT, sleepFn = sleep }) {
     this.baseUrl = normalizeBaseUrl(baseUrl);
     this.token = token;
     this.maxRetries = maxRetries;
+    this.userAgent = normalizeUserAgent(userAgent);
     this.sleep = sleepFn;
   }
 
@@ -147,6 +149,8 @@ class CanvasApi {
     };
     const body = options.body;
 
+    setHeaderDefault(headers, 'User-Agent', this.userAgent);
+
     if (shouldSendCanvasAuthorization(url, this.baseUrl)) {
       headers.Authorization ??= `Bearer ${this.token}`;
     }
@@ -210,8 +214,30 @@ class CanvasApi {
   }
 }
 
+function setHeaderDefault(headers, name, value) {
+  if (!value) {
+    return;
+  }
+
+  const existingName = Object.keys(headers).find((headerName) => headerName.toLowerCase() === name.toLowerCase());
+  if (!existingName) {
+    headers[name] = value;
+  }
+}
+
+function normalizeUserAgent(value) {
+  const userAgent = String(value ?? DEFAULT_USER_AGENT).trim() || DEFAULT_USER_AGENT;
+
+  if (/[\x00-\x1F\x7F]/.test(userAgent)) {
+    throw new Error('User-Agent must not contain control characters.');
+  }
+
+  return userAgent;
+}
+
 export {
   CanvasApi,
   CanvasHttpError,
   CanvasNetworkError,
+  DEFAULT_USER_AGENT,
 };

@@ -15,6 +15,7 @@ import {
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
   DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS,
+  DEFAULT_USER_AGENT,
   backupFiles,
   backupCourseAdjacentMetadata,
   backupStaffRoles,
@@ -897,6 +898,84 @@ test('authorization is scoped to the Canvas origin', () => {
   assert.equal(
     shouldSendCanvasAuthorization('https://canvas-files.example/download.zip', 'https://lu.instructure.com'),
     false,
+  );
+});
+
+test('CanvasApi sends a configured User-Agent header', async () => {
+  const originalFetch = globalThis.fetch;
+  let requestHeaders = null;
+
+  globalThis.fetch = async (_url, init) => {
+    requestHeaders = init.headers;
+    return new Response('{"ok":true}', { status: 200 });
+  };
+
+  try {
+    const api = new CanvasApi({
+      baseUrl: 'https://lu.instructure.com',
+      token: 'secret',
+      maxRetries: 0,
+      userAgent: 'CustomCanvasBackup/2.0',
+      sleepFn: async () => {},
+    });
+
+    await api.fetchRaw('/api/v1/courses');
+
+    assert.equal(requestHeaders['User-Agent'], 'CustomCanvasBackup/2.0');
+    assert.equal(requestHeaders.Authorization, 'Bearer secret');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('CanvasApi keeps explicit User-Agent headers from callers', async () => {
+  const originalFetch = globalThis.fetch;
+  let requestHeaders = null;
+
+  globalThis.fetch = async (_url, init) => {
+    requestHeaders = init.headers;
+    return new Response('{"ok":true}', { status: 200 });
+  };
+
+  try {
+    const api = new CanvasApi({
+      baseUrl: 'https://lu.instructure.com',
+      token: 'secret',
+      maxRetries: 0,
+      sleepFn: async () => {},
+    });
+
+    await api.fetchRaw('/api/v1/courses', {
+      headers: { 'user-agent': 'ExistingClient/1.0' },
+    });
+
+    assert.equal(requestHeaders['user-agent'], 'ExistingClient/1.0');
+    assert.equal(requestHeaders['User-Agent'], undefined);
+    assert.equal(api.userAgent, DEFAULT_USER_AGENT);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('CanvasApi validates configured User-Agent values before fetch', () => {
+  const api = new CanvasApi({
+    baseUrl: 'https://lu.instructure.com',
+    token: 'secret',
+    maxRetries: 0,
+    userAgent: '',
+    sleepFn: async () => {},
+  });
+
+  assert.equal(api.userAgent, DEFAULT_USER_AGENT);
+  assert.throws(
+    () => new CanvasApi({
+      baseUrl: 'https://lu.instructure.com',
+      token: 'secret',
+      maxRetries: 0,
+      userAgent: 'Bad\nAgent',
+      sleepFn: async () => {},
+    }),
+    /User-Agent must not contain control characters/,
   );
 });
 

@@ -243,3 +243,15 @@
 - Severity: 🟢 nice-to-know
 - Tags: [backup] [pattern]
 - Lesson: Canvas `export_type=zip` only packages the Files tab contents, while `export_type=common_cartridge` packages the full course (structure + content + files). The zip is a strict subset of what is already in the .imscc, and `--mode direct` separately downloads the same files via the API, so requesting both export types stores the same file bytes up to three times. Default `DEFAULT_EXPORT_TYPES` to `['common_cartridge']` and let users opt back into zip explicitly if they want a separately extractable files archive.
+
+## 2026-05-13 - Keep Canvas backup User-Agent reusable
+
+- Severity: 🟡 important
+- Tags: [backup] [configuration] [interoperability]
+- Lesson: Canvas backup requests should send a non-empty `User-Agent`, but the default should stay reusable for other institutions. Use `LU.Canvas.Backup/1.0 (Local Canvas backup)` by default and let local operators override it with `--user-agent` / `CANVAS_USER_AGENT`.
+
+## 2026-05-13 - Start copied config against Canvas beta
+
+- Severity: 🟡 important
+- Tags: [backup] [configuration] [safety]
+- Lesson: Keep `.env.example` pointed at `https://lu.beta.instructure.com` so copied local configuration starts against beta by default. Operators should review `run-options.json` and override `CANVAS_BASE_URL` deliberately before any production or broad backup run.

@@ -18,7 +18,7 @@ Prerequisites:
 Configure:
 
 1. Copy `.env.example` to `.env`.
-2. Set `CANVAS_TOKEN=<your token>`. Adjust `CANVAS_ACCOUNT_ID`, `CANVAS_CREATED_AFTER`, exclusion lists, and `CANVAS_MAX_FILE_SIZE_MB` as needed.
+2. Set `CANVAS_TOKEN=<your token>`. The example file points at `https://lu.beta.instructure.com` by default; change `CANVAS_BASE_URL` deliberately for production runs. Keep `CANVAS_USER_AGENT` non-empty; the default identifies a local Canvas backup tool. Adjust `CANVAS_ACCOUNT_ID`, `CANVAS_CREATED_AFTER`, exclusion lists, and `CANVAS_MAX_FILE_SIZE_MB` as needed.
 3. Set `CANVAS_OUTPUT_DIR` to a stable run folder (e.g. `E:\CanvasBackup\run-2026-05-11`) for real backup runs. Leave blank for list-only/check-config — those default to a timestamped folder under `E:\CanvasBackup`.
 
 Run (PowerShell):
@@ -90,13 +90,13 @@ Staff deleted/rejected/inactive enrollments are excluded by default. Use `--staf
 
 Copy `.env.example` to a local `.env` when token-backed runs are needed. Local `.env` files and backup output folders are ignored by Git because they may contain Canvas tokens or sensitive institutional data.
 
-The example configuration uses `CANVAS_ACCOUNT_ID=1`, `CANVAS_BACKUP_MODE=both`, limits discovery to courses created on or after the approved initial cutoff `2025-04-01`, sets `CANVAS_MAX_FILE_SIZE_MB=300`, excludes obvious course name/code noise terms including `test`, `sandlåda`, `sandlada`, `sandbox`, `mall`, `template`, and `demo`, excludes courses whose direct Canvas subaccount name matches `sandbox`, and excludes courses where Canvas reports `total_students=0`. All configured course name/code and subaccount-name exclusion terms use the same edge rule: the term must be at the absolute end of the field, or at the beginning followed by a non-`a-z` character.
+The example configuration uses `CANVAS_ACCOUNT_ID=1`, `CANVAS_BACKUP_MODE=both`, `CANVAS_USER_AGENT=LU.Canvas.Backup/1.0 (Local Canvas backup)`, limits discovery to courses created on or after the approved initial cutoff `2025-04-01`, sets `CANVAS_MAX_FILE_SIZE_MB=300`, excludes obvious course name/code noise terms including `test`, `sandlåda`, `sandlada`, `sandbox`, `mall`, `template`, and `demo`, excludes courses whose direct Canvas subaccount name matches `sandbox`, and excludes courses where Canvas reports `total_students=0`. All configured course name/code and subaccount-name exclusion terms use the same edge rule: the term must be at the absolute end of the field, or at the beginning followed by a non-`a-z` character.
 
 Broad discovery now requires an admin account scope through `--account-id` / `CANVAS_ACCOUNT_ID`, unless exact `--course-ids` are used. The limited current-user fallback through `/api/v1/courses` must be explicitly enabled with `--allow-user-course-discovery` or `CANVAS_ALLOW_USER_COURSE_DISCOVERY=true` so it is not mistaken for an admin emergency selection.
 
 Use `node scripts\canvas-backup.mjs --check-config` to print the redacted effective configuration before making Canvas API calls. This works even before a local token is available, and shows `token: null` until `CANVAS_TOKEN` or `--token` is set.
 
-The script retries retryable HTTP statuses and thrown fetch/network errors, and it skips already downloaded non-empty files when Canvas omits file sizes. It sends the Canvas bearer token only to the configured Canvas origin. Absolute external file or export download URLs are fetched without the Canvas `Authorization` header. Canvas error bodies in manifests are redacted for obvious bearer token, token parameter, and session fields, but they are not a full personal-data scrub.
+The script retries retryable HTTP statuses and thrown fetch/network errors, and it skips already downloaded non-empty files when Canvas omits file sizes. It sends a configurable `User-Agent` header on HTTP requests so Canvas can identify the backup client. It sends the Canvas bearer token only to the configured Canvas origin. Absolute external file or export download URLs are fetched without the Canvas `Authorization` header. Canvas error bodies in manifests are redacted for obvious bearer token, token parameter, and session fields, but they are not a full personal-data scrub.
 
 Local verification:
 

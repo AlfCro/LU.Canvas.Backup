@@ -7,6 +7,7 @@ import {
   readList,
   readString,
 } from './utilities.mjs';
+import { DEFAULT_USER_AGENT } from './canvas-api.mjs';
 
 const DEFAULT_BASE_URL = 'https://lu.instructure.com';
 const DEFAULT_MODE = 'direct';
@@ -107,6 +108,7 @@ async function readOptions(args, { requireToken } = { requireToken: true }) {
     skipFileDownloads: readBoolean(args.skipFileDownloads ?? process.env.CANVAS_SKIP_FILE_DOWNLOADS, false),
     staffIncludeDeleted,
     token,
+    userAgent: readString(args.userAgent ?? process.env.CANVAS_USER_AGENT, DEFAULT_USER_AGENT),
     waitExports: args.noWaitExports ? false : readBoolean(process.env.CANVAS_WAIT_EXPORTS, true),
   };
 }
@@ -177,6 +179,7 @@ Required:
 
 Common options:
   --base-url URL                Defaults to ${DEFAULT_BASE_URL}
+  --user-agent TEXT             Defaults to ${DEFAULT_USER_AGENT}
   --account-id ID               Backup courses from an account, for admin tokens.
   --course-ids 1,2,3            Backup explicit course IDs instead of discovery.
   --course-ids-file PATH        Newline-separated course IDs.

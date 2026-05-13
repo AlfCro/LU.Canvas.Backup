@@ -5,9 +5,11 @@ Use this checklist to move from planning to the first validated Canvas backup ru
 ## Required Decisions
 
 - [x] Canvas broad discovery scope is known: root account `1`, including nested subaccounts under that root.
+- [x] Example local config points at Canvas beta by default: `CANVAS_BASE_URL=https://lu.beta.instructure.com`.
 - [ ] Current-user course discovery is not used for a broad emergency run unless `--allow-user-course-discovery` / `CANVAS_ALLOW_USER_COURSE_DISCOVERY=true` has been explicitly approved as a limited fallback.
 - [ ] Subaccount grouping is accepted: course backups will be written under `subaccounts/<account-id>-<account-name>/courses/<course-id>_<sis-course-id-or-code>/`.
 - [ ] Canvas token scope is understood, and the token is stored outside Git.
+- [x] Canvas requests use a non-empty User-Agent. The default is the generic local identifier `LU.Canvas.Backup/1.0 (Local Canvas backup)`.
 - [ ] Relevant Canvas course states are approved. Current script default: `created`, `claimed`, `available`, `completed`.
 - [x] First broad-run `created_after` cutoff is approved: `2025-04-01`.
 - [x] Courses where Canvas reports `total_students=0` are excluded from broad discovery. Courses with no reported count are kept for review.
@@ -31,11 +33,14 @@ Use this checklist to move from planning to the first validated Canvas backup ru
 - [x] `node --check scripts\canvas-backup.mjs` passed on 2026-05-08 after the root account, E-drive, and zero-student filter changes.
 - [x] `node scripts\canvas-backup.mjs --help` printed the expected options on 2026-05-08, including the field-edge exclusion notes, `--include-courses-without-students`, `--max-file-size-mb`, and no obsolete staff identifier redaction flag.
 - [x] `node --test scripts\canvas-backup.test.mjs` passed on 2026-05-08, including the review hardening tests, sandbox subaccount exclusion tests, uniform edge-only filter tests, zero-student selection tests, staff login/SIS identifier preservation test, file-size download limit test, and metadata-only file-size summary test.
+- [x] User-Agent update validation passed on 2026-05-13: syntax, help, redacted check-config, and `node --test scripts\canvas-backup.test.mjs`.
 - [x] `.env` exists locally only if a token is needed; it is ignored by Git.
 - [x] `node scripts\canvas-backup.mjs --check-config` can print the redacted configuration before any Canvas API calls, even before a token is configured; it now shows account `1`, `E:\CanvasBackup` timestamped output, `excludeSubaccountNameTerms`, `excludeCoursesWithoutStudents`, and no obsolete staff identifier redaction option.
 - [x] `E:\CanvasBackup` is the approved local output root, and the user has confirmed TB-scale space is available there.
 - [ ] `E:\CanvasBackup` is mounted and writable from the execution environment. On 2026-05-08, this Codex shell reported `E:\` as not ready, so the root account list-only run did not start.
+- [ ] Confirm `run-options.json` shows the intended `baseUrl` before any production or broad backup run.
 - [ ] The approved root account `1` selected-course count and file-size summaries are reviewed before broad content backup.
+- [ ] Confirm the actual broad-run `run-options.json` shows the expected non-empty `userAgent` before broad backup content is fetched.
 - [ ] Confirm the actual broad-run `run-options.json` shows the approved `CANVAS_MAX_FILE_SIZE_MB=300` before broad backup content is fetched.
 - [ ] Per-course `metadata/file-size-summary.json` files are reviewed from a metadata-only or small direct run before approving broad storage assumptions.
 - [ ] The selected mode is reviewed:

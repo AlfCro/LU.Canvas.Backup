@@ -4,7 +4,10 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { CanvasApi } from './canvas-backup/canvas-api.mjs';
+import {
+  CanvasApi,
+  DEFAULT_USER_AGENT,
+} from './canvas-backup/canvas-api.mjs';
 import {
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
@@ -94,6 +97,7 @@ async function main() {
     baseUrl: options.baseUrl,
     token: options.token,
     maxRetries: options.maxRetries,
+    userAgent: options.userAgent,
   });
 
   await mkdir(options.outputDir, { recursive: true });
@@ -214,6 +218,7 @@ function logStartupBanner(api, options) {
   console.log(`  Canvas:      ${api.baseUrl}`);
   console.log(`  Mode:        ${options.mode}`);
   console.log(`  Output:      ${options.outputDir}`);
+  console.log(`  User agent:  ${options.userAgent}`);
   console.log(`  Concurrency: ${options.concurrency} course(s), ${options.fileConcurrency} file(s)/course`);
   if (options.maxFileSizeMb) {
     console.log(`  File limit:  ${options.maxFileSizeMb} MB per file`);
@@ -263,6 +268,7 @@ function isMainModule() {
 
 export {
   CanvasApi,
+  DEFAULT_USER_AGENT,
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
   DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS,
