@@ -287,5 +287,5 @@ Use `CANVAS_BACKUP_ROLLOUT_CHECKLIST.md` for the concrete preflight, list-only s
 - Root account `1` list-only counts and file-size summaries still need review before broad content backup.
 - Approved: use `CANVAS_MAX_FILE_SIZE_MB=300` for broad emergency runs unless explicitly overridden.
 - Approved: send `CANVAS_USER_AGENT=LU.Canvas.Backup/1.0 (Local Canvas backup)` unless a local operator needs a different institutional identifier.
-- Approved for copied local config: `.env.example` uses `CANVAS_BASE_URL=https://lu.beta.instructure.com`; production runs should review and override the base URL deliberately.
+- Approved default: both the executable fallback and `.env.example` use `CANVAS_BASE_URL=https://lu.beta.instructure.com`; production runs should review and override the base URL deliberately.
 - No major sensitive PII concern is expected; keep the current script scope and avoid privacy debate as a blocker.

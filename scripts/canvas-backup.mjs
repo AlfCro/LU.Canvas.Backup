@@ -9,11 +9,13 @@ import {
   DEFAULT_USER_AGENT,
 } from './canvas-backup/canvas-api.mjs';
 import {
+  DEFAULT_BASE_URL,
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
   DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS,
   printHelp,
   readOptions,
+  readUserAgent,
   redactOptions,
   resolveOutputDir,
   validateOutputDirForRun,
@@ -268,6 +270,7 @@ function isMainModule() {
 
 export {
   CanvasApi,
+  DEFAULT_BASE_URL,
   DEFAULT_USER_AGENT,
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
@@ -295,8 +298,10 @@ export {
   readDate,
   readInteger,
   readList,
+  readOptions,
   readPriorCourseBackupStatus,
   readString,
+  readUserAgent,
   redactErrorBody,
   redactOptions,
   resolveOutputDir,

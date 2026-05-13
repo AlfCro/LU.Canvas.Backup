@@ -7,9 +7,12 @@ import {
   readList,
   readString,
 } from './utilities.mjs';
-import { DEFAULT_USER_AGENT } from './canvas-api.mjs';
+import {
+  DEFAULT_USER_AGENT,
+  normalizeUserAgent,
+} from './canvas-api.mjs';
 
-const DEFAULT_BASE_URL = 'https://lu.instructure.com';
+const DEFAULT_BASE_URL = 'https://lu.beta.instructure.com';
 const DEFAULT_MODE = 'direct';
 const DEFAULT_OUTPUT_ROOT = 'E:\\CanvasBackup';
 const DEFAULT_COURSE_STATES = ['created', 'claimed', 'available', 'completed'];
@@ -108,7 +111,7 @@ async function readOptions(args, { requireToken } = { requireToken: true }) {
     skipFileDownloads: readBoolean(args.skipFileDownloads ?? process.env.CANVAS_SKIP_FILE_DOWNLOADS, false),
     staffIncludeDeleted,
     token,
-    userAgent: readString(args.userAgent ?? process.env.CANVAS_USER_AGENT, DEFAULT_USER_AGENT),
+    userAgent: readUserAgent(args.userAgent ?? process.env.CANVAS_USER_AGENT),
     waitExports: args.noWaitExports ? false : readBoolean(process.env.CANVAS_WAIT_EXPORTS, true),
   };
 }
@@ -136,6 +139,14 @@ function validateOutputDirForRun(args, outputWasExplicit) {
   }
 
   throw new Error('Backup runs require --output or CANVAS_OUTPUT_DIR so retries resume into the same directory. Use --list-only for timestamped selection checks.');
+}
+
+function readUserAgent(value) {
+  if (typeof value === 'boolean') {
+    throw new Error('--user-agent requires a value. Use --user-agent "..." or CANVAS_USER_AGENT=...');
+  }
+
+  return normalizeUserAgent(readString(value, DEFAULT_USER_AGENT));
 }
 
 async function readCourseIds(args) {
@@ -179,7 +190,7 @@ Required:
 
 Common options:
   --base-url URL                Defaults to ${DEFAULT_BASE_URL}
-  --user-agent TEXT             Defaults to ${DEFAULT_USER_AGENT}
+  --user-agent TEXT             Defaults to ${DEFAULT_USER_AGENT}; env CANVAS_USER_AGENT.
   --account-id ID               Backup courses from an account, for admin tokens.
   --course-ids 1,2,3            Backup explicit course IDs instead of discovery.
   --course-ids-file PATH        Newline-separated course IDs.
@@ -222,11 +233,13 @@ Common options:
 }
 
 export {
+  DEFAULT_BASE_URL,
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
   DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS,
   printHelp,
   readOptions,
+  readUserAgent,
   redactOptions,
   resolveOutputDir,
   validateOutputDirForRun,

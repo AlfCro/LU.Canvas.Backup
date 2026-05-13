@@ -12,6 +12,7 @@ import test from 'node:test';
 
 import {
   CanvasApi,
+  DEFAULT_BASE_URL,
   DEFAULT_EXCLUDE_COURSES_WITHOUT_STUDENTS,
   DEFAULT_EXCLUDED_COURSE_NAME_TERMS,
   DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS,
@@ -39,7 +40,9 @@ import {
   readDate,
   readInteger,
   readList,
+  readOptions,
   readString,
+  readUserAgent,
   redactErrorBody,
   redactOptions,
   resolveOutputDir,
@@ -105,6 +108,10 @@ test('default name exclusions match the approved broad-run noise terms', () => {
 
 test('default subaccount exclusions match the approved broad-run noise terms', () => {
   assert.deepEqual(DEFAULT_EXCLUDED_SUBACCOUNT_NAME_TERMS, ['sandbox']);
+});
+
+test('built-in base URL default points at Canvas beta', () => {
+  assert.equal(DEFAULT_BASE_URL, 'https://lu.beta.instructure.com');
 });
 
 test('zero-student courses are excluded by default', () => {
@@ -928,6 +935,42 @@ test('CanvasApi sends a configured User-Agent header', async () => {
   }
 });
 
+test('CanvasApi respects caller header casing without adding duplicates', async () => {
+  const originalFetch = globalThis.fetch;
+  let requestHeaders = null;
+
+  globalThis.fetch = async (_url, init) => {
+    requestHeaders = init.headers;
+    return new Response('{"ok":true}', { status: 200 });
+  };
+
+  try {
+    const api = new CanvasApi({
+      baseUrl: 'https://lu.instructure.com',
+      token: 'secret',
+      maxRetries: 0,
+      sleepFn: async () => {},
+    });
+
+    await api.fetchRaw('/api/v1/courses', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer caller-token',
+        'content-type': 'application/custom-form',
+      },
+      body: new URLSearchParams({ a: '1' }),
+    });
+
+    assert.equal(requestHeaders.authorization, 'Bearer caller-token');
+    assert.equal(requestHeaders.Authorization, undefined);
+    assert.equal(requestHeaders['content-type'], 'application/custom-form');
+    assert.equal(requestHeaders['Content-Type'], undefined);
+    assert.equal(requestHeaders['User-Agent'], DEFAULT_USER_AGENT);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('CanvasApi keeps explicit User-Agent headers from callers', async () => {
   const originalFetch = globalThis.fetch;
   let requestHeaders = null;
@@ -972,10 +1015,31 @@ test('CanvasApi validates configured User-Agent values before fetch', () => {
       baseUrl: 'https://lu.instructure.com',
       token: 'secret',
       maxRetries: 0,
+      userAgent: true,
+      sleepFn: async () => {},
+    }),
+    /User-Agent must be an identifying string/,
+  );
+  assert.throws(
+    () => readUserAgent('true'),
+    /User-Agent must be an identifying string/,
+  );
+  assert.throws(
+    () => new CanvasApi({
+      baseUrl: 'https://lu.instructure.com',
+      token: 'secret',
+      maxRetries: 0,
       userAgent: 'Bad\nAgent',
       sleepFn: async () => {},
     }),
     /User-Agent must not contain control characters/,
+  );
+});
+
+test('readOptions rejects --user-agent without a value', async () => {
+  await assert.rejects(
+    () => readOptions(parseArgs(['--user-agent', '--check-config']), { requireToken: false }),
+    /--user-agent requires a value/,
   );
 });
 

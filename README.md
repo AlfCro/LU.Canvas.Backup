@@ -18,7 +18,7 @@ Prerequisites:
 Configure:
 
 1. Copy `.env.example` to `.env`.
-2. Set `CANVAS_TOKEN=<your token>`. The example file points at `https://lu.beta.instructure.com` by default; change `CANVAS_BASE_URL` deliberately for production runs. Keep `CANVAS_USER_AGENT` non-empty; the default identifies a local Canvas backup tool. Adjust `CANVAS_ACCOUNT_ID`, `CANVAS_CREATED_AFTER`, exclusion lists, and `CANVAS_MAX_FILE_SIZE_MB` as needed.
+2. Set `CANVAS_TOKEN=<your token>`. The script and example file point at `https://lu.beta.instructure.com` by default; change `CANVAS_BASE_URL` deliberately for production runs. Keep `CANVAS_USER_AGENT` non-empty; the default identifies a local Canvas backup tool. Adjust `CANVAS_ACCOUNT_ID`, `CANVAS_CREATED_AFTER`, exclusion lists, and `CANVAS_MAX_FILE_SIZE_MB` as needed.
 3. Set `CANVAS_OUTPUT_DIR` to a stable run folder (e.g. `E:\CanvasBackup\run-2026-05-11`) for real backup runs. Leave blank for list-only/check-config — those default to a timestamped folder under `E:\CanvasBackup`.
 
 Run (PowerShell):

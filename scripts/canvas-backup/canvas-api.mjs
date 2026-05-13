@@ -152,11 +152,11 @@ class CanvasApi {
     setHeaderDefault(headers, 'User-Agent', this.userAgent);
 
     if (shouldSendCanvasAuthorization(url, this.baseUrl)) {
-      headers.Authorization ??= `Bearer ${this.token}`;
+      setHeaderDefault(headers, 'Authorization', `Bearer ${this.token}`);
     }
 
-    if (body instanceof URLSearchParams && !headers['Content-Type']) {
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    if (body instanceof URLSearchParams) {
+      setHeaderDefault(headers, 'Content-Type', 'application/x-www-form-urlencoded');
     }
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -226,7 +226,15 @@ function setHeaderDefault(headers, name, value) {
 }
 
 function normalizeUserAgent(value) {
+  if (typeof value === 'boolean') {
+    throw new Error('User-Agent must be an identifying string, not a boolean flag.');
+  }
+
   const userAgent = String(value ?? DEFAULT_USER_AGENT).trim() || DEFAULT_USER_AGENT;
+
+  if (/^(true|false)$/i.test(userAgent)) {
+    throw new Error('User-Agent must be an identifying string, not a boolean flag.');
+  }
 
   if (/[\x00-\x1F\x7F]/.test(userAgent)) {
     throw new Error('User-Agent must not contain control characters.');
@@ -240,4 +248,5 @@ export {
   CanvasHttpError,
   CanvasNetworkError,
   DEFAULT_USER_AGENT,
+  normalizeUserAgent,
 };

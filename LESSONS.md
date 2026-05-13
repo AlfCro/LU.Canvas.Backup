@@ -255,3 +255,9 @@
 - Severity: 🟡 important
 - Tags: [backup] [configuration] [safety]
 - Lesson: Keep `.env.example` pointed at `https://lu.beta.instructure.com` so copied local configuration starts against beta by default. Operators should review `run-options.json` and override `CANVAS_BASE_URL` deliberately before any production or broad backup run.
+
+## 2026-05-13 - Align executable and example safety defaults
+
+- Severity: 🟡 important
+- Tags: [backup] [configuration] [review]
+- Lesson: When a safety default is documented, enforce it in both the executable fallback and `.env.example`. For Canvas base URLs, use beta as the default in code and copied config, and require operators to override `CANVAS_BASE_URL` deliberately for production.

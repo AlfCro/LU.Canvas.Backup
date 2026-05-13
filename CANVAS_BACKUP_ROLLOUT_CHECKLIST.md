@@ -5,7 +5,7 @@ Use this checklist to move from planning to the first validated Canvas backup ru
 ## Required Decisions
 
 - [x] Canvas broad discovery scope is known: root account `1`, including nested subaccounts under that root.
-- [x] Example local config points at Canvas beta by default: `CANVAS_BASE_URL=https://lu.beta.instructure.com`.
+- [x] Executable fallback and example local config point at Canvas beta by default: `CANVAS_BASE_URL=https://lu.beta.instructure.com`.
 - [ ] Current-user course discovery is not used for a broad emergency run unless `--allow-user-course-discovery` / `CANVAS_ALLOW_USER_COURSE_DISCOVERY=true` has been explicitly approved as a limited fallback.
 - [ ] Subaccount grouping is accepted: course backups will be written under `subaccounts/<account-id>-<account-name>/courses/<course-id>_<sis-course-id-or-code>/`.
 - [ ] Canvas token scope is understood, and the token is stored outside Git.
